@@ -2,27 +2,9 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using NBB.Contracts.Application.CommandHandlers;
-using NBB.Contracts.Domain.ContractAggregate;
-using NBB.Contracts.WriteModel.Data;
-using NBB.Correlation;
-using NBB.Correlation.Serilog;
-using NBB.Data.EventSourcing;
-using NBB.Data.EventSourcing.Infrastructure;
-using NBB.Domain;
-using NBB.EventStore;
-using NBB.EventStore.Abstractions;
-using NBB.EventStore.AdoNet;
-using NBB.EventStore.AdoNet.Internal;
-using NBB.EventStore.Internal;
-using NBB.EventStore.MessagingExtensions;
-using NBB.EventStore.MessagingExtensions.Internal;
 using NBB.Mediator.OpenFaaS;
 using NBB.Mediator.OpenFaaS.Extensions;
-using NBB.Messaging.Abstractions;
-using NBB.Messaging.Nats;
-using NBB.Messaging.Nats.Internal;
+
 using Serilog;
 using Serilog.Events;
 using System;
@@ -44,20 +26,17 @@ namespace NBB.Contracts.Functions.CreateContract
 
         public async Task Invoke(string body, CancellationToken cancellationToken)
         {
-            var correlationId = GetCorrelationIdFromBuffer(body);
-            using (CorrelationManager.NewCorrelationId(correlationId))
-            {
+
                 using (var scope = _container.CreateScope())
                 {
                     var command = GetCommandFromBuffer(body);
-                    var commandHandler = scope.ServiceProvider.GetService<IRequestHandler<Application.Commands.CreateContract>>();
+                    var commandHandler = scope.ServiceProvider.GetService<IRequestHandler<Application.CreateContract.Command>>();
                     if (commandHandler != null)
                     {
                         await commandHandler.Handle(command, cancellationToken);
                     }
                 }
-            }
-
+            
             //using (CorrelationManager.NewCorrelationId(correlationId))
             //{
             //    var command = GetCommandFromBuffer(buffer);
@@ -94,8 +73,6 @@ namespace NBB.Contracts.Functions.CreateContract
                     .MinimumLevel.Debug()
                     .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
                     .Enrich.FromLogContext()
-                    .Enrich.With<CorrelationLogEventEnricher>()
-                    //.WriteTo.Console()
                     .WriteTo.MSSqlServer(configuration.GetConnectionString("Logs"), "Logs", autoCreateSqlTable: true)
                     .CreateLogger();
 
@@ -103,29 +80,22 @@ namespace NBB.Contracts.Functions.CreateContract
             });
 
             services.AddOpenFaaSMediator();
-            //services.AddKafkaMessaging();
-            services.AddNatsMessaging();
-            services.AddContractsWriteModelDataAccess();
 
-            services.AddEventStore()
-                .WithNewtownsoftJsonEventStoreSeserializer(new[] { new SingleValueObjectConverter() })
-                .WithAdoNetEventRepository()
-                .WithMessagingExtensions();
 
-            services.AddScoped<IRequestHandler<NBB.Contracts.Application.Commands.CreateContract>, ContractCommandHandlers>();
+            services.AddScoped<IRequestHandler<Application.CreateContract.Command>, Application.CreateContract.Handler>();
 
             var container = services.BuildServiceProvider();
             return container;
         }
 
 
-        private static ContractCommandHandlers GetCommandHandler()
+        private static Application.CreateContract.Handler GetCommandHandler()
         {
             var configurationBuilder = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                 .AddEnvironmentVariables();
-
+            
             var environment = Environment.GetEnvironmentVariable("NETCORE_ENVIRONMENT");
             var isDevelopment = string.Equals(environment, "development", StringComparison.OrdinalIgnoreCase);
 
@@ -139,38 +109,16 @@ namespace NBB.Contracts.Functions.CreateContract
                 .MinimumLevel.Debug()
                 .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
                 .Enrich.FromLogContext()
-                .Enrich.With<CorrelationLogEventEnricher>()
                 .WriteTo.MSSqlServer(configuration.GetConnectionString("Logs"), "Logs", autoCreateSqlTable: true)
                 .CreateLogger();
 
             var loggerFactory = new LoggerFactory();
             loggerFactory.AddSerilog();
 
-            var stanConnectionProvider = new StanConnectionProvider(configuration, new Logger<StanConnectionProvider>(loggerFactory), null);
-            var topicRegistry = new DefaultTopicRegistry(configuration);
-            var messageTypeRegistry = new DefaultMessageTypeRegistry();
-            var messageSerdes = new NewtonsoftJsonMessageSerDes(messageTypeRegistry);
-            var messagingTopicPublisher = new NatsMessagingTopicPublisher(stanConnectionProvider, new Logger<NatsMessagingTopicPublisher>(loggerFactory));
-            var messageBusPublisher = new MessageBusPublisher(messagingTopicPublisher, topicRegistry, messageSerdes, configuration);
-
-            var scripts = new Scripts();
-            var eventRepository = new AdoNetEventRepository(scripts, new Logger<AdoNetEventRepository>(loggerFactory), new Options());
-
-            var eventStoreSerDes = new NewtonsoftJsonEventStoreSerDes();
-            var eventStore = new EventStore.EventStore(eventRepository, eventStoreSerDes, new Logger<EventStore.EventStore>(loggerFactory));
-            var eventStoreDecorator = new MessagingEventStoreDecorator(eventStore, messageBusPublisher, new MessagingTopicResolver(new Options()));
             var mediator = new OpenFaaSMediator(configuration, new Logger<OpenFaaSMediator>(loggerFactory));
-            var repository = new EventSourcedRepository<Contract>(eventStoreDecorator, null, mediator, new EventSourcingOptions(), new Logger<EventSourcedRepository<Contract>>(loggerFactory));
-            var result = new ContractCommandHandlers(repository);
-
-            //disposables = new List<IDisposable>{stanConnectionProvider};
+            var result = new Application.CreateContract.Handler(mediator);
 
             return result;
-        }
-
-        internal class Options : IOptions<EventStoreOptions>
-        {
-            public EventStoreOptions Value => new EventStoreOptions { ConnectionString = "test", TopicSufix = "Test" };
         }
 
 
@@ -179,9 +127,9 @@ namespace NBB.Contracts.Functions.CreateContract
             return null;
         }
 
-        private static NBB.Contracts.Application.Commands.CreateContract GetCommandFromBuffer(string buffer)
+        private static Application.CreateContract.Command GetCommandFromBuffer(string buffer)
         {
-            return new NBB.Contracts.Application.Commands.CreateContract(Guid.NewGuid());
+            return new Application.CreateContract.Command(Guid.NewGuid());
         }
 
     }

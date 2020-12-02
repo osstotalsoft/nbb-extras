@@ -9,8 +9,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\src\Tools\Export\NBB.Exporter.Excel\NBB.Exporter.Excel.csproj" />
-    <ProjectReference Include="..\..\..\..\src\Tools\Export\NBB.Exporter\NBB.Exporter.csproj" />
+    <ProjectReference Include="..\..\..\..\src\Export\NBB.Exporter.Excel\NBB.Exporter.Excel.csproj" />
+    <ProjectReference Include="..\..\..\..\src\Export\NBB.Exporter\NBB.Exporter.csproj" />
   </ItemGroup>
 
 

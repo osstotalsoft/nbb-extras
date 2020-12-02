@@ -1,7 +1,7 @@
 ﻿<Project>
   <Import Project="dependencies.props" />
   <PropertyGroup>
-    <Version>$(GitVersion_NuGetVersion)</Version>
+    <Version>4.2.9-alpha5</Version>
     <Authors>Totalsoft</Authors>
     <Company>Totalsoft</Company>
     <PackageTags>totalsoft nbb</PackageTags>

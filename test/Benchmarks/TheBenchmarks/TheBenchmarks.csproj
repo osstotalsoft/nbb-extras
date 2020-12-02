@@ -38,19 +38,4 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="$(MicrosoftExtensionsPackagesVersion)" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\src\Data\NBB.Data.EventSourcing\NBB.Data.EventSourcing.csproj" />
-    <ProjectReference Include="..\..\..\src\Domain\NBB.Domain\NBB.Domain.csproj" />
-    <ProjectReference Include="..\..\..\src\EventStore\NBB.EventStore.AdoNet.Migrations\NBB.EventStore.AdoNet.Migrations.csproj" />
-    <ProjectReference Include="..\..\..\src\EventStore\NBB.EventStore.AdoNet\NBB.EventStore.AdoNet.csproj" />
-    <ProjectReference Include="..\..\..\src\EventStore\NBB.EventStore\NBB.EventStore.csproj" />
-    <ProjectReference Include="..\..\..\src\EventStore\NBB.GetEventStore\NBB.GetEventStore.csproj" />
-    <ProjectReference Include="..\..\..\src\EventStore\NBB.SQLStreamStore.Migrations\NBB.SQLStreamStore.Migrations.csproj" />
-    <ProjectReference Include="..\..\..\src\EventStore\NBB.SQLStreamStore\NBB.SQLStreamStore.csproj" />
-    <ProjectReference Include="..\..\..\src\Messaging\NBB.Messaging.Abstractions\NBB.Messaging.Abstractions.csproj" />
-    <ProjectReference Include="..\..\..\src\Messaging\NBB.Messaging.DataContracts\NBB.Messaging.DataContracts.csproj" />
-    <ProjectReference Include="..\..\..\src\Messaging\NBB.Messaging.Kafka\NBB.Messaging.Kafka.csproj" />
-    <ProjectReference Include="..\..\..\src\Messaging\NBB.Messaging.Nats\NBB.Messaging.Nats.csproj" />
-  </ItemGroup>
-
 </Project>
