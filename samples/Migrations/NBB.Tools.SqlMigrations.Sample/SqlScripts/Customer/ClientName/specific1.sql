@@ -1,0 +1,1 @@
+insert into Test select 1, 'specific1'
