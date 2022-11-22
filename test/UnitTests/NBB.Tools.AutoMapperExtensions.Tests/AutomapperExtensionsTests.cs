@@ -13,11 +13,15 @@ namespace NBB.Tools.AutoMapperExtensions.Tests
             var source = new Source(111, 222);
 
             //Act
-            Mapper.Initialize(cfg => cfg
-                .CreateMap<Source, Destination>()
-                .ForCtorParamMatching(dest => dest.DestinationValue, opt => opt.MapFrom(src => src.SourceValue)));
+            var config = new MapperConfiguration(cfg =>
+            {
+                cfg
+                    .CreateMap<Source, Destination>()
+                    .ForCtorParamMatching(dest => dest.DestinationValue,
+                        opt => opt.MapFrom(src => src.SourceValue));
+            });
 
-            var destination = Mapper.Map<Destination>(source);
+            var destination = config.CreateMapper().Map<Destination>(source);
 
             //Assert
             destination.CommonValue.Should().Be(source.CommonValue);
