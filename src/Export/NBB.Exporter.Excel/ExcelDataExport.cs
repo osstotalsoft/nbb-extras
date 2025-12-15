@@ -96,6 +96,9 @@ namespace NBB.Exporter.Excel
             headerFont.IsBold = true;
             headerStyle.SetFont(headerFont);
 
+            var dateStyle = workbook.CreateCellStyle();
+            dateStyle.DataFormat = 14; // ID 14 = "System Short Date" (adapts to user's locale)
+
             //Header
             var header = sheet.CreateRow(0);
             for (var i = 0; i < headers.Count; i++)
@@ -133,6 +136,7 @@ namespace NBB.Exporter.Excel
                                 break;
                             case "datetime":
                                 row.SetCellValue(Convert.ToDateTime(prop));
+                                row.CellStyle = dateStyle;
                                 break;
                             default:
                                 row.SetCellValue(Convert.ToString(prop));
